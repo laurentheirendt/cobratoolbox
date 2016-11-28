@@ -1,58 +1,64 @@
 %% Define variables
-clear 
+clear
 initCobraToolbox
 
-pathToCOBRA = 'ADD PATH TO COBRATOOLBOX'; % e.g., 'C:\Users...\GitHub'
-path = 'ADD YOUR PATH TO YOUR OUTPUT FOLDER'; %
-solver = 'ADD YOUR SOLVER'; %, e.g., 'cplex_direct' for ILOG
+% retrieve the path to the COBRA Toolbox
+pathToCOBRA = which('initCobraToolbox.m');
 
+pathToCOBRA = pathToCOBRA(1:end-length('initCobraToolbox.m'));
+%
+path = pwd;
+%pathToCOBRA = 'ADD PATH TO COBRATOOLBOX'; % e.g., 'C:\Users...\GitHub'
+%path = 'ADD YOUR PATH TO YOUR OUTPUT FOLDER'; %
+solver = 'cplex_direct'
+%solver = 'ADD YOUR SOLVER'; %, e.g., 'cplex_direct' for ILOG
+addpath(genpath('/opt/ibm/ILOG'))
 
-%% set and check solver 
+%% set and check solver
 solverOK = changeCobraSolver(solver,'LP');
 
-if solverOK ==1
+if solverOK
     display('The solver is set.');
 else
-    display('Error in solver: Check if the solver is in the matlab path (set path) or check for typos?');
+    error('Error in solver: Check if the solver is in the matlab path (set path) or check for typos?');
 end
-
 
 %% load and check input is loaded correctly
 
-if isequal(exist([pathToCOBRA '\cobratoolbox\metabotools\tutorial_I\starting_model.mat'],'file'),2)% 2 means it's a file.
-
-    load([pathToCOBRA '\cobratoolbox\metabotools\tutorial_I\starting_model.mat']);
+if exist('starting_model.mat') == 2
+    load('starting_model.mat');
     display('The model is loaded.');
-   
-else 
+else
     display('Error in pathToCOBRA: The starting_model could not be loaded. Does pathToCOBRA contain typos or additional '\'? ');
-end 
-
-%% Check output path and writing permission
-if ~exist(path)==7
-    display('Error in path: Does pathToCOBRA contain typos or additional '\' ?');
 end
 
+%% Check output path and writing permission
+%if ~exist(path)==7
+%    display('Error in path: Does pathToCOBRA contain typos or additional '\' ?');
+%end
+
 % display if writing is not possible
-display('Warning: If a red matlab error message appears after this message, files cannot be saved to your path location! Obtain rights to write into output directory or set path to a different directory.');
+%display('Warning: If a red matlab error message appears after this message, files cannot be saved to your path location! Obtain rights to write into output directory or set path to a different directory.');
+fprintf('Testing to write an output file ... ')
 
 % make and save dummy file to test writing to output directory
 A = rand(1);
-save([path '\' 'A']);
+save([path filesep 'A']);
+fprintf('Passed.')
 
 
 display('Continue with tutorial if solver and paths are set correctly.');
 
-%% beginn computations 
+%% beginn computations
 
-%% Step 1: Shaping the model's environment using setMediumConstraints 
-%% RPMI medium composition. 
+%% Step 1: Shaping the model's environment using setMediumConstraints
+%% RPMI medium composition.
 medium_composition={'EX_ala_L(e)'
 'EX_arg_L(e)'
 'EX_asn_L(e)'
 'EX_asp_L(e)'
 'EX_cys_L(e)'
-'EX_gln_L(e)' 
+'EX_gln_L(e)'
 'EX_glu_L(e)'
 'EX_gly(e)'
 'EX_his_L(e)'
@@ -61,7 +67,7 @@ medium_composition={'EX_ala_L(e)'
 'EX_lys_L(e)'
 'EX_met_L(e)'
 'EX_phe_L(e)'
-'EX_4HPRO(e)' 
+'EX_4HPRO(e)'
 'EX_pro_L(e)'
 'EX_ser_L(e)'
 'EX_thr_L(e)'
@@ -100,7 +106,7 @@ met_Conc_mM=[0.1
 0.15
 0.379
 0.208
-2 
+2
 0.136
 0.133
 0.0968
@@ -139,7 +145,7 @@ met_Conc_mM=[0.1
 1
 0
 0.00326
-0.0073 
+0.0073
 ];
 
 
@@ -169,7 +175,7 @@ mediumCompounds = {'EX_co2(e)'; 'EX_h(e)'; 'EX_h2o(e)'; 'EX_hco3(e)'; 'EX_nh4(e)
    -100
    -100
      ];
- 
+
  customizedConstraints_ub = [
      500
      0
@@ -184,7 +190,7 @@ mediumCompounds = {'EX_co2(e)'; 'EX_h(e)'; 'EX_h2o(e)'; 'EX_hco3(e)'; 'EX_nh4(e)
 [modelMedium,basisMedium] = setMediumConstraints(starting_model, set_inf, current_inf, medium_composition, met_Conc_mM, cellConc, t, cellWeight, mediumCompounds, mediumCompounds_lb, customizedConstraints, customizedConstraints_ub, customizedConstraints_lb);
 
  %% **Step 2** calculateLODs
- 
+
  ex_RXNS = {
 'EX_5mta(e)'
 'EX_uri(e)'
@@ -206,7 +212,7 @@ mediumCompounds = {'EX_co2(e)'; 'EX_h(e)'; 'EX_h2o(e)'; 'EX_hco3(e)'; 'EX_nh4(e)
 'EX_thr_L(e)'
 'EX_fol(e)'
 'EX_gln_L(e)'
-'EX_4pyrdx(e)' 
+'EX_4pyrdx(e)'
 'EX_ser_L(e)'
 'EX_glc(e)'
 'EX_ribflv(e)'
@@ -374,9 +380,9 @@ lod_ngmL = [0.3
 24.8
 3
 ];
- 
+
 [lod_mM] = calculateLODs(theo_mass,lod_ngmL);
- 
+
  %% **Step 3** define Uptake and Secretion Profiles
 exclude_upt = {'EX_gln_L(e)'; 'EX_cys_L(e)'; 'EX_ala_L(e)';'EX_mal_L(e)';'EX_fol(e)'};
 exclude_secr = {'EX_gln_L(e)'; 'EX_cys_L(e)'; 'EX_ala_L(e)'};
@@ -424,7 +430,7 @@ data_RXNS={
 };
 
 %% Molt-4
-input_A	= [		
+input_A	= [
 %control TP 1	control TP 2	Cond TP 1	Cond TP 2
 65245.09667	68680.93	54272.41667	65159.50333
 3000	30970.784	20292.406	27226.6555
@@ -463,7 +469,7 @@ input_A	= [
 
 
 %%CCRF-CEM
-input_B	= [		
+input_B	= [
 % control 2 TP 1	control 2 TP 2	Cond 2 TP 1	Cond 2 TP 2
 65245.09667	68680.93	73850.77	98489.89
 3000	30970.784	3000	94181.77233
@@ -499,14 +505,14 @@ input_B	= [
 5107317.333	5168599.333	5134219	4445918.333
 95419.73667	105904.7067	100629.24	84807.62333
 ];
- 
+
 
 [cond1_uptake, cond2_uptake, cond1_secretion, cond2_secretion, slope_Ratio] = defineUptakeSecretionProfiles(input_A, input_B, data_RXNS, tol, essAA_excl, exclude_upt, exclude_secr,add_secr, add_upt);
 
 
 %% MANIPULATE OUTPUT: Add secretion without data points to secretion condition 2.
 
-add_secretion = {'EX_4pyrdx(e)' 
+add_secretion = {'EX_4pyrdx(e)'
 'EX_34hpp'
 'EX_uri(e)'
 'EX_succ(e)'
@@ -571,7 +577,7 @@ basisMedium = {'EX_ca2(e)';'EX_cl(e)';'EX_co(e)';'EX_fe2(e)';'EX_fe3(e)';'EX_k(e
 
 [model_B] = setQualitativeConstraints(modelMedium, cond2_uptake, cond2_uptake_LODs, cond2_secretion, cond2_secretion_LODs, cellConc, t, cellWeight, ambiguous_metabolites, basisMedium);
 
-%% 
+%%
 %% **5** setSemiQuantConstraints
 % This function applies the constraints to the models. It takes two
 % condition specific models into consideration.
@@ -598,10 +604,10 @@ dT= 22;
 
 [model_B_BM] = setConstraintsOnBiomassReaction(modelB_QUANT, of, dT, tolerance);
 
-%% 
+%%
 
 %% **7** integrateGeneExpressionData
-%% 
+%%
 
 dataGenes = [535
 1548
@@ -616,7 +622,7 @@ dataGenes = [535
 23545
 129807
 221823
-]; 
+];
 
 [model_A_GE] = integrateGeneExpressionData(model_A_BM, dataGenes);
 
@@ -639,7 +645,7 @@ dataGenes = [239
 66002
 129807
 221823
-]; 
+];
 
 
 
@@ -651,7 +657,7 @@ dataGenes = [239
 theshold = 1e-6;
 model = model_A_GE;
 [model_Molt] = extractConditionSpecificModel(model,theshold);
-%% 
+%%
 
 [model_CEM] = extractConditionSpecificModel(model_B_GE, theshold);
 
@@ -673,7 +679,7 @@ semilogy(sort(MetConnCompareB,'descend'),'go')
 title ('Metabolite connectivity')
 
 
-%% perform sampling analysis 
+%% perform sampling analysis
 
 
 warmupn = 2000;
@@ -733,4 +739,3 @@ show_rxns={
 [stats, statsR] = summarizeSamplingResults(modelA,modelB,path,nFiles,pointsPerFile,starting_Model,dataGenes,show_rxns,fonts,hist_per_page,bin,'modelA', 'modelB');
 
 clearvars -EXCEPT model_Molt model_CEM modelMedium stats statsR
-

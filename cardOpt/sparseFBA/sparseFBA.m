@@ -41,7 +41,7 @@ function [vSparse,sparseRxnBool,essentialRxnBool]  = sparseFBA(model,osenseStr,c
 %  v                    reaction rate vector
 
 % Hoai Minh Le	23/10/2015
-% Ronan Fleming 12/07/2016 nonzero flux is set according to current 
+% Ronan Fleming 12/07/2016 nonzero flux is set according to current
 %                          feasibility tol. Default is 1e-9.
 
 
@@ -73,23 +73,25 @@ else
     zeroNormApprox = 'cappedL1';
 end
 
-%use global solver parameter for printLevel
+% use global solver parameter for printLevel
 if ~exist('printLevel', 'var')
     printLevel = 1;
 end
 
-%%%%%%%%%
+% set tolerances
 feasTol = getCobraSolverParams('LP', 'feasTol');
 optTol = getCobraSolverParams('LP', 'optTol');
 
 % tolerance for non-zero flux
-    epsilon = feasTol;
-    %use the default feasTol
-    params.feasTol=feasTol;
-    params.optTol=optTol;
-    %default feasibility and optimality tolerance is 1e-9, which is anyway lower than epislon
-    CobraParams = struct('feasTol',params.feasTol,'optTol',params.optTol);
-    
+epsilon = feasTol;
+
+%use the default feasTol
+params.feasTol=feasTol;
+params.optTol=optTol;
+
+%default feasibility and optimality tolerance is 1e-9, which is anyway lower than epislon
+CobraParams = struct('feasTol', params.feasTol, 'optTol', params.optTol);
+
 [m,n] = size(model.S);
 
 if ~isfield(model,'csense')
@@ -100,7 +102,7 @@ if ~isfield(model,'csense')
     end
     csense(1:m,1) = 'E';
 else % if csense is in the model, move it to the lp problem structure
-    if length(model.csense)~=m,
+    if length(model.csense) ~= m,
         warning('Length of csense is invalid! Defaulting to equality constraints.')
         csense(1:m,1) = 'E';
     else
@@ -111,8 +113,8 @@ end
 
 % Fill in the RHS vector if not provided
 if ~isfield(model,'b')
-    warning('LP problem has no defined b in S*v=b. b should be defined, for now we assume b=0')
-    b=zeros(m,1);
+    warning('LP problem has no defined b in S*v=b. b should be defined. We assume b=0.\n')
+    b = zeros(m,1);
 else
     b = model.b;
 end
@@ -122,8 +124,8 @@ if ~isfield(model,'csense')
     fprintf('%s\n','csense is not defined. We assume that all constraints are equalities.')
     csense(1:m,1) = 'E';
 else
-    if length(model.csense)~=m,
-        warning('Length of csense is invalid! Defaulting to equality constraints.')
+    if length(model.csense) ~= m,
+        warning('Length of csense is invalid. Defaulting to equality constraints.')
         csense(1:m,1) = 'E';
     else
         model.csense = columnVector(model.csense);
@@ -131,59 +133,58 @@ else
     end
 end
 
-[c,S,b,lb,ub] = deal(model.c,model.S,model.b,model.lb,model.ub);
-
+[c, S, b, lb, ub] = deal(model.c, model.S, model.b, model.lb, model.ub);
 
 %% Compute f* = max c'v or f* = min c'v
 if strcmpi(osenseStr,'max')
     osense = -1;
 elseif strcmpi(osenseStr,'min')
-    osense = +1;
+    osense = 1;
 elseif strcmpi(osenseStr,'none')
-    osense = +1;
+    osense = 1;
     c = zeros(n,1);
 end
 
-if nnz(c)~=0
-    time=cputime;
+if nnz(c) ~= 0
+    time = cputime;
     LPproblem = struct('c',c,'osense',osense,'A',S,'csense',csense,'b',b,'lb',lb,'ub',ub);
     FBAsolution = solveCobraLP(LPproblem,CobraParams);
-    time = cputime-time;
+    time = cputime - time;
 else
-    time=0;
-    FBAsolution.stat=1;
-    FBAsolution.full=zeros(size(model.lb));
+    time = 0;
+    FBAsolution.stat = 1;
+    FBAsolution.full = zeros(size(model.lb));
 end
 
-    %       stat                status
-    %                           1 =  Solution found
-    %                           2 =  Unbounded
-    %                           0 =  Infeasible
-    %                           -1=  Invalid input
+% Solution status
+% 1  =  Solution found
+% 2  =  Unbounded
+% 0  =  Infeasible
+% -1 =  Invalid input
 switch FBAsolution.stat
     case 2
         v = [];
-        fprintf('%s\n','FBA problem error: Unbounded !!!!')
+        error('FBA problem unbounded.\n')
     case 0
         v = [];
-        fprintf('%s\n','FBA problem error: Infeasible !!!!')
+        error('FBA problem infeasible.\n')
     case -1
         v = [];
-        warning('%s\n','FBA problem error: Invalid input !!!!')
+        error('FBA problem - invalid input.\n')
     case 1
         vFBA = FBAsolution.full(1:n);
-        objFBA = c'*vFBA;
-        
-        if nnz(c)~=0 & printLevel >= 0
+        objFBA = c' * vFBA;
+
+        if nnz(c) ~= 0 && printLevel >= 0
             display('---FBA')
             display(strcat('Obj = ',num2str(objFBA)));
             display(strcat('|vFBA|_0 = ',num2str(nnz(abs(vFBA)>=epsilon))));
             display(strcat('Comp. time = ',num2str(time)));
         end
-        
+
         % Minimise the number of reactions by keeping same max objective found previously
         % One adds the constraint : c'v = c'vFBA
-        if nnz(c)~=0
+        if nnz(c) ~= 0
             constraint.A = [S ; c'];
             constraint.b = [b ; objFBA];
             constraint.csense = [csense;'E'];
@@ -192,47 +193,47 @@ switch FBAsolution.stat
             constraint.b = b;
             constraint.csense = csense;
         end
-        
+
         constraint.lb = lb;
         constraint.ub = ub;
-        
+
         %% Minimise l_0 norm
         time = cputime;
-        params.epsilon=epsilon;
+        params.epsilon = epsilon;
         solutionL0 = sparseLP(zeroNormApprox,constraint,params);
-        
-        if printLevel>2
+
+        if printLevel > 2
             fprintf('%10g%s%g%s\n',norm(constraint.A*solutionL0.x-constraint.b),' ||S*v-b||_0, should be less than tolerance (',epsilon,').')
             fprintf('%10g%s\n',min(constraint.ub-solutionL0.x),'  min(ub-v), should be non-negative.')
             fprintf('%10g%s\n',min(solutionL0.x-constraint.lb),'  min(v-lb), should be non-negative.')
         end
         time = cputime - time;
-       
+
         %save the solution
-        vApprox=solutionL0.x;
+        vApprox = solutionL0.x;
         %identify active reactions
-        activeRxnBool = abs(vApprox)>=epsilon;
-       
+        activeRxnBool = abs(vApprox) >= epsilon;
+
         %Check if one can still achieve the same objective only with predicted active reactions
         %remove all predicted non-active reactions
         tightLPproblem = struct('c',c(activeRxnBool),'osense',osense,'A',S(:,activeRxnBool),'csense',csense,'b',b,'lb',model.lb(activeRxnBool),'ub',model.ub(activeRxnBool));
-        
+
         %solve the tighter problem
         tightSolution = solveCobraLP(tightLPproblem,CobraParams);
-        
+
         if tightSolution.stat == 1 && abs(tightSolution.obj - objFBA)<epsilon
             %it could be that this solution is more sparse
-            if nnz(activeRxnBool)> nnz(abs(tightSolution.full)>=epsilon)
-                if 1       
-                    %identify active reactions
-                    activeRxnBoolOld=activeRxnBool;
-                    %update sparse solution and active reactions
-                    vApprox=sparse(n,1);
-                    vApprox(activeRxnBool)=tightSolution.full;
-                    activeRxnBool = abs(vApprox)>=epsilon;
-                end
+            if nnz(activeRxnBool) > nnz(abs(tightSolution.full)>=epsilon)
+                %identify active reactions
+                activeRxnBoolOld = activeRxnBool;
+
+                %update sparse solution and active reactions
+                vApprox = sparse(n,1);
+                vApprox(activeRxnBool) = tightSolution.full;
+                activeRxnBool = abs(vApprox)>=epsilon;
             end
-            if printLevel>1
+
+            if printLevel > 1
                 fprintf('%s\n','Testing of DC approximation results in a sparser solution')
                 disp(solutionL0.x(activeRxnBoolOld & ~activeRxnBool))
             end
@@ -240,62 +241,70 @@ switch FBAsolution.stat
             error('Cannot achieve the objective value. Tolerance for non-zero flux is probably too large!!!!')
         end
 end
+
 %identify active reactions
 activeRxnBool = abs(vApprox)>=epsilon;
 
 %number of reactions in sparse solution
-nSparse=nnz(activeRxnBool);
-    
+nSparse = nnz(activeRxnBool);
+
 %% check which reactions are essential
 essentialRxnBool = false(n,1);
-if checkEssentialSet == true
+if checkEssentialSet
     %assume all active reactions are in the minimal set unless tested
     essentialTightRxnsBool = true(nSparse,1);
-    
+
     if ~isempty(activeRxnBool) && printLevel > 1
         disp(['sparseFBA solution: zero norm before heuristic rxn removal = ', num2str(nnz(activeRxnBool))])
     end
-    
-    %Remove one of the predicted active reaction and verify if 
+
+    %Remove one of the predicted active reaction and verify if
     %the optimal objective value can be achieved
-    for i=1:nSparse
-        %try to remove a reaction entirely from model
+    for i = 1:nSparse
+        % try to remove a reaction entirely from model
         essentialTightRxnsBoolTemp = true(nSparse,1);
-        essentialTightRxnsBoolTemp(i)=0;
-        tighterLPproblem = struct('c',tightLPproblem.c(essentialTightRxnsBoolTemp),'osense',osense,'A',tightLPproblem.A(:,essentialTightRxnsBoolTemp),'csense',csense,'b',b,'lb',tightLPproblem.lb(essentialTightRxnsBoolTemp),'ub',tightLPproblem.ub(essentialTightRxnsBoolTemp));        
-        %see if a solution exists
+        essentialTightRxnsBoolTemp(i) = 0;
+        tighterLPproblem = struct('c',tightLPproblem.c(essentialTightRxnsBoolTemp),'osense',osense,'A',tightLPproblem.A(:,essentialTightRxnsBoolTemp),'csense',csense,'b',b,'lb',tightLPproblem.lb(essentialTightRxnsBoolTemp),'ub',tightLPproblem.ub(essentialTightRxnsBoolTemp));
+        % check if a solution exists
         LPsolution = solveCobraLP(tighterLPproblem,CobraParams);
-        if LPsolution.stat == 1 && abs(LPsolution.obj - objFBA)< optTol %&& any(abs(LPsolution.full)>=epsilon)
+        if LPsolution.stat == 1 && abs(LPsolution.obj - objFBA) < optTol %&& any(abs(LPsolution.full)>=epsilon)
             essentialTightRxnsBool(i) = false;
         end
     end
     %pad out
-    essentialRxnBool(activeRxnBool)=essentialTightRxnsBool;
+    essentialRxnBool(activeRxnBool) = essentialTightRxnsBool;
 else
-    essentialRxnBool=[];
+    essentialRxnBool = [];
 end
 
-
 %% Check if the selected set of reactions is minimal
-if checkMinimalSet == true
+if checkMinimalSet
     % vHeuristic = sparse(n,1);
     vHeuristic = vApprox;
+
     %first assume all active reactions are in the minimal set
     minimalTightRxnBool = true(nSparse,1);
-    
+
     if ~isempty(activeRxnBool) && printLevel > 1
         disp(['sparseFBA solution: zero norm before heuristic rxn removal = ', num2str(nnz(activeRxnBool))])
     end
-    
-    %Remove one by one the predicted active reaction and verify if
-    %the optimal objective value can be achieved
-    tighterRxnsBool=true(nSparse,1);
-    for i=1:nSparse
+
+    % remove one by one the predicted active reaction and verify if
+    % the optimal objective value can be achieved
+    tighterRxnsBool = true(nSparse,1);
+    for i = 1:nSparse
         %no need to test a reaction if it is known to be essential
-        if  1 && checkEssentialSet && ~essentialTightRxnsBool(i)
+        if checkEssentialSet && ~essentialTightRxnsBool(i)
             %try to remove reaction entirely from model
-            tighterRxnsBool(i)=0;
-            tighterLPproblem = struct('c',tightLPproblem.c(tighterRxnsBool),'osense',osense,'A',tightLPproblem.A(:,tighterRxnsBool),'csense',csense,'b',b,'lb',tightLPproblem.lb(tighterRxnsBool),'ub',tightLPproblem.ub(tighterRxnsBool));
+            tighterRxnsBool(i) = 0;
+            tighterLPproblem = struct('c', tightLPproblem.c(tighterRxnsBool),...
+                                      'osense', osense,...
+                                      'A', tightLPproblem.A(:,tighterRxnsBool),...
+                                      'csense', csense,...
+                                      'b', b,...
+                                      'lb', tightLPproblem.lb(tighterRxnsBool),...
+                                      'ub',tightLPproblem.ub(tighterRxnsBool));
+
             %see if a solution exists
             LPsolution = solveCobraLP(tighterLPproblem,CobraParams);
             if LPsolution.stat == 1 && abs(LPsolution.obj - objFBA)< optTol %&& any(abs(LPsolution.full)>=epsilon)
@@ -312,37 +321,36 @@ if checkMinimalSet == true
     end
     %pad out
     minimalRxnBool = false(n,1);
-    minimalRxnBool(activeRxnBool)=minimalTightRxnBool;
+    minimalRxnBool(activeRxnBool) = minimalTightRxnBool;
     %solution for output
-    vSparse=vHeuristic;
+    vSparse = vHeuristic;
 else
-    vSparse=vApprox;
+    vSparse = vApprox;
 end
-sparseRxnBool=abs(vSparse)>=epsilon;
-
+sparseRxnBool = abs(vSparse) >= epsilon;
 
 %% Display result
 if printLevel > 0
     fprintf('%s\n','---Non-convex approximation---')
     if any(c)
-        fprintf('%g%s\n',c'*solutionL0.x,' = sparse LP objective.');
+        fprintf('%g%s\n', c' * solutionL0.x,' = sparse LP objective.');
         display(strcat('Error ||c^T*v - f*||^2=',num2str(norm(c'*solutionL0.x - objFBA,2))));
     end
 %    fprintf('%u%s%s%s\n',nnz(activeRxnBool),' rxns in sparsest solution found using a ', solutionL0.bestAprox, ' approximation.');
-    if  checkMinimalSet
-        fprintf('%u%s\n',nnz(minimalRxnBool),' of these are heuristically minimal rxns.');
+    if checkMinimalSet
+        fprintf('%u%s\n', nnz(minimalRxnBool), ' of these are heuristically minimal rxns.');
     end
-    if  checkEssentialSet
-        fprintf('%u%s\n',nnz(essentialRxnBool),' of these are essential rxns.');
+    if checkEssentialSet
+        fprintf('%u%s\n', nnz(essentialRxnBool), ' of these are essential rxns.');
     end
     if printLevel > 1
         display(strcat('Comp. time = ',num2str(time)));
     end
 else
     if printLevel > 1
-        fprintf('%u%s\n',nnz(sparseRxnBool),' rxns in sparsest solution.');
+        fprintf('%u%s\n', nnz(sparseRxnBool), ' rxns in sparsest solution.');
         if  checkEssentialSet
-            fprintf('%u%s\n',nnz(essentialRxnBool),' of these are essential rxns.');
+            fprintf('%u%s\n', nnz(essentialRxnBool), ' of these are essential rxns.');
         end
     end
 end
