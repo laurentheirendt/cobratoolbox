@@ -99,32 +99,32 @@ switch samplerName
         % Prepare model for sampling by reducing bounds
         [nMet,nRxn] = size(model.S);
         fprintf('Original model: %d rxns %d metabolites\n',nRxn,nMet);
-        
+
         % Reduce model
         fprintf('Reduce model\n');
         model.rxns = regexprep(model.rxns,'(_r)$','_bladibla'); % Workaround to avoid renaming reactions that end in '_r'
-        
+
         modelRed = reduceModel(model, 1e-6, false,false,true);
-        
+
         modelRed.rxns = regexprep(modelRed.rxns,'(_bladibla)$','_r'); % Replace '_r' ending
         [nMet,nRxn] = size(modelRed.S);
         fprintf('Reduced model: %d rxns %d metabolites\n',nRxn,nMet);
         save modelRedTmp modelRed;
-        
+
         modelSampling = modelRed;
-        
+
         % Use Artificial Centering Hit-and-run
-        
+
         fprintf('Create warmup points\n');
         % Create warmup points for sampler
         warmupPts= createHRWarmup(modelSampling,nWarmupPoints);
-        
+
         save sampleCbModelTmp modelSampling warmupPts
-        
+
         fprintf('Run sampler for a total of %d steps\n',nFiles*nPointsPerFile*nStepsPerPoint);
         % Sample model
         ACHRSampler(modelSampling,warmupPts,sampleFile,nFiles,nPointsPerFile,nStepsPerPoint,[],[],maxTime);
-        
+
         fprintf('Load samples\n');
         % Load samples
         nPointsPerFileLoaded = ceil(nPointsReturned/(nFiles-nFilesSkipped));
@@ -135,33 +135,33 @@ switch samplerName
         samples = samples(:,round(linspace(1,size(samples,2),min([nPointsReturned,size(samples,2)]))));
         % Fix reaction directions
         [modelSampling,samples] = convRevSamples(modelSampling,samples);
-        
+
         volume = 'Set samplerName = ''MFE'' to estimate volume.';
-        
+
     case 'CHRR'
         [samples,modelSampling] = chrrSampler(model,nStepsPerPoint,nPointsReturned,toRound,modelSampling);
-        
+
         volume = 'Set samplerName = ''MFE'' to estimate volume.';
-        
+
     case 'MFE'
         %[volume,T,steps] = Volume(P,E,eps,p,flags)
         %This function is a randomized algorithm to approximate the volume of a convex
         %body K = P \cap E with relative error eps. The last 4 parameters are optional;
         %you can see the default values at the top of Volume.m.
-        
+
         %---INPUT VALUES---
         %P: the polytope [A b] which is {x | Ax <= b}
         %E: the ellipsoid [Q v] which is {x | (x-v)'Q^{-1}(x-v)<=1}
         %eps: the target relative error
         %p: a point inside P \cap E close to the center
         %flags: a string of input flags. see parseFlags.m
-        
+
         %---RETURN VALUES---
         %volume: the computed volume estimate
         %T: the rounding matrix. If no rounding, then T is identity matrix
         %steps: the number of steps the volume algorithm took
         %r_steps: the number of steps the rounding algorithm took
-        
+
         %assign default values if not assigned in function call
         [m,n]=size(model.S);
         if 1
@@ -188,18 +188,21 @@ switch samplerName
         else
             eps=options.eps;
         end
-        
+        P = [];
+        P.A = A;
+        P.b = b;
         %get an intial point
         FBAsolution = optimizeCbModel(model);
         p=FBAsolution.x;
+        P.p = p;
         %[volume,T,steps,r_steps] = Volume(P,E,eps,p,flags);
         %[volume,T,steps,r_steps] = Volume(P,E,eps,p);
+
         [volume,T,steps,r_steps] = Volume(P,E,eps);
-        
+
         modelSampling=[];
         samples=[];
-        
+
     otherwise
         error(['Unknown sampler: ' samplerName]);
 end
-
