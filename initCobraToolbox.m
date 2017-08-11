@@ -157,7 +157,6 @@ function initCobraToolbox()
     % check curl
     [status_curl, result_curl] = checkCurlAndRemote(false);
 
-    %{
     % check if the URL exists
     if exist([CBTDIR filesep 'binary' filesep 'README.md'], 'file') && status_curl ~= 0
         fprintf(' > Submodules exist but cannot be updated (remote cannot be reached).\n');
@@ -167,15 +166,15 @@ function initCobraToolbox()
         end
 
         % temporary disable ssl verification
-        [status_setSSLVerify, result_setSSLVerify] = system('git config http.sslVerify false');
-
+        [status_setSSLVerify, result_setSSLVerify] = system('git config http.sslVerify false')
+        
         if status_setSSLVerify ~= 0
             fprintf(result_setSSLVerify);
             warning('Your global git configuration could not be changed.');
         end
 
         % Update/initialize submodules
-        [status_gitSubmodule, result_gitSubmodule] = system('git submodule update --init');
+        [status_gitSubmodule, result_gitSubmodule] = system('git submodule update --init')
         
         if status_gitSubmodule ~= 0
             fprintf(result_gitSubmodule);
@@ -183,7 +182,7 @@ function initCobraToolbox()
         end
 
         % reset each submodule
-        [status_gitReset, result_gitReset] = system('git submodule foreach --recursive git reset --hard');
+        [status_gitReset, result_gitReset] = system('git submodule foreach --recursive git reset --hard')
 
         if status_gitReset ~= 0
             fprintf(result_gitReset);
@@ -191,7 +190,7 @@ function initCobraToolbox()
         end
 
         % restore global configuration by unsetting http.sslVerify
-        [status_setSSLVerify, result_setSSLVerify] = system('git config --unset http.sslVerify');
+        [status_setSSLVerify, result_setSSLVerify] = system('git config --unset http.sslVerify')
 
         if status_setSSLVerify ~= 0
             fprintf(result_setSSLVerify);
@@ -202,7 +201,7 @@ function initCobraToolbox()
             fprintf(' Done.\n');
         end
     end
-    %}
+
     % add the folders of The COBRA Toolbox
     folders = {'tutorials', 'papers', 'binary', 'deprecated', 'src', 'test', '.tmp'};
 
