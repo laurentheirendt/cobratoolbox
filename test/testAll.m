@@ -42,7 +42,7 @@ cd(CBTDIR);
 % run the official initialisation script
 initCobraToolbox;
 
-if ~isempty(strfind(getenv('HOME'), 'jenkins'))
+if ~isempty(strfind(getenv('HOME'), 'jenkins')) || ~isempty(strfind(getenv('USERPROFILE'), 'jenkins'))
     WAITBAR_TYPE = 0;
 else
     WAITBAR_TYPE = 1;
@@ -165,6 +165,11 @@ try
     sumFailed = 0;
     sumIncomplete = 0;
 
+    for i = 1:size(result, 2)
+        sumFailed = sumFailed + result(i).Failed;
+        sumIncomplete = sumIncomplete + result(i).Incomplete;
+    end
+        
     if COVERAGE
         % write coverage based on profile('info')
         fprintf('Running MoCov ... \n')
@@ -174,11 +179,6 @@ try
               '-cover_html_dir', 'coverage_html', ...
               '-cover_method', 'profile', ...
               '-verbose');
-
-        for i = 1:size(result, 2)
-            sumFailed = sumFailed + result(i).Failed;
-            sumIncomplete = sumIncomplete + result(i).Incomplete;
-        end
 
         % load the coverage file
         data = loadjson('coverage.json', 'SimplifyCell', 1);
