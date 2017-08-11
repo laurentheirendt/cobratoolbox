@@ -9,7 +9,7 @@ elif [ "$ARCH" == "Windows" ]; then
     cd "D:\jenkins\workspace\COBRAToolbox-windows\MATLAB_VER\R2016b\label\windows-biocore"
     echo "User currently executing: $whoami"
     echo " -- Launching MATLAB --"
-    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "initCobraToolbox; exit;" & #cd test; testAll;  
+    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "initCobraToolbox; cd test; testAll; exit;" &
     tail -n0 -F --pid=$! output.log 2>/dev/null
 fi
 
