@@ -166,7 +166,7 @@ function initCobraToolbox()
         end
 
         % temporary disable ssl verification
-        [status_setSSLVerify, result_setSSLVerify] = system('git config http.sslVerify false')
+        [status_setSSLVerify, result_setSSLVerify] = system('git config http.sslVerify false');
         
         if status_setSSLVerify ~= 0
             fprintf(strrep(result_setSSLVerify, '\', '\\'));
