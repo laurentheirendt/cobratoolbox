@@ -10,9 +10,9 @@ elif [ "$ARCH" == "Windows" ]; then
     echo "User currently executing:"
     whoami
     echo " -- Launching MATLAB --"
-    
-    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log  -r "testAll; exit;" #-wait
+    touch output.log
     tail -f output.log
+    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "testAll; exit;"
     #cat output.log
 fi
 CODE=$?
