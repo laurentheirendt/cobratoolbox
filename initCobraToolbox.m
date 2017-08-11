@@ -157,6 +157,7 @@ function initCobraToolbox()
     % check curl
     [status_curl, result_curl] = checkCurlAndRemote(false);
 
+    %{
     % check if the URL exists
     if exist([CBTDIR filesep 'binary' filesep 'README.md'], 'file') && status_curl ~= 0
         fprintf(' > Submodules exist but cannot be updated (remote cannot be reached).\n');
@@ -175,7 +176,7 @@ function initCobraToolbox()
 
         % Update/initialize submodules
         [status_gitSubmodule, result_gitSubmodule] = system('git submodule update --init');
-
+        
         if status_gitSubmodule ~= 0
             fprintf(result_gitSubmodule);
             error('The submodules could not be initialized.');
@@ -201,7 +202,7 @@ function initCobraToolbox()
             fprintf(' Done.\n');
         end
     end
-
+    %}
     % add the folders of The COBRA Toolbox
     folders = {'tutorials', 'papers', 'binary', 'deprecated', 'src', 'test', '.tmp'};
 
