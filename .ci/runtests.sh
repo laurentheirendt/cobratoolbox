@@ -14,7 +14,7 @@ elif [ "$ARCH" == "Windows" ]; then
     #touch output.log
     
     "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log  -r "initCobraToolbox; exit;" #cd test; testAll;  -wait
-    tail output.log
+    tail -f output.log
     #cat output.log
 fi
 CODE=$?
