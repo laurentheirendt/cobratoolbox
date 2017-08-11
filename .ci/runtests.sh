@@ -11,10 +11,15 @@ elif [ "$ARCH" == "Windows" ]; then
     whoami
     echo " -- Launching MATLAB --"
     # create a new output.log file
-    #touch output.log
-    
+    touch output.log
     "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log  -r "initCobraToolbox; exit;" #cd test; testAll;  -wait
-    tail -f output.log
+    tail -f output.log | while read line 
+    do
+      if echo $line | grep -q 'MATLAB.devTools'; then
+        echo 'Done logging.'
+        exit 0
+      fi
+    done
     #cat output.log
 fi
 CODE=$?
