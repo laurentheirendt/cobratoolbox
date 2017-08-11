@@ -101,6 +101,8 @@ function initCobraToolbox()
     % add the install folder
     addpath(genpath([CBTDIR filesep 'src' filesep 'base' filesep 'install']));
 
+    installGitBash();
+
     % check if git is installed
     checkGit();
 
