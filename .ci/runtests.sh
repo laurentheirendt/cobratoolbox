@@ -7,8 +7,11 @@ elif [ "$ARCH" == "macOS" ]; then
 elif [ "$ARCH" == "Windows" ]; then
     echo "Je suis ici"
     cd "D:\jenkins\workspace\COBRAToolbox-windows\MATLAB_VER\R2016b\label\windows-biocore"
-    cd "D:"
-    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "run('D:\jenkins\workspace\COBRAToolbox-windows\MATLAB_VER\R2016b\label\windows-biocore\test\testAll.m')"
+    # echo the current directory
+    cd
+    #cd "D:"
+    "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "initCobraToolbox;"
+    #"run('D:\jenkins\workspace\COBRAToolbox-windows\MATLAB_VER\R2016b\label\windows-biocore\test\testAll.m')"
     cat output.log
 fi
 CODE=$?
