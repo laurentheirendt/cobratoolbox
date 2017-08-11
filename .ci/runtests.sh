@@ -8,9 +8,6 @@ elif [ "$ARCH" == "Windows" ]; then
     echo " -- Changing to the build directory --"
     cd "D:\jenkins\workspace\COBRAToolbox-windows\MATLAB_VER\R2016b\label\windows-biocore"
     whoami
-    echo "Configuring git"
-    git config --global user.email "cobrabot.ci@gmail.com"
-    git config --global user.name "cobrabot"
     #echo "Kill sh.exe"
     #"C:\Windows\System32\cmd.exe" /c /F /IM "sh.exe"
     #"C:\Windows\System32\cmd.exe" /c /F /IM "ssh-agent.exe"
