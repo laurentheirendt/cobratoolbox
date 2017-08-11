@@ -10,6 +10,7 @@ elif [ "$ARCH" == "Windows" ]; then
     echo "User currently executing:"
     whoami
     echo " -- Launching MATLAB --"
+    # create a new output.log file
     touch output.log
     tail -f output.log
     "C:\Program Files\Matlab\R2016b\bin\matlab.exe" -logfile output.log -wait -r "initCobraToolbox; cd test; testAll; exit;"
