@@ -160,8 +160,8 @@ try
     retrieveModels;
 
     % print the environment variables
-    fprintf(['\n > USERPROFILE: ', getenv('USERPROFILE'), '\n']);
-    fprintf(['\n > HOME: ', getenv('HOME'), '\n']);
+    fprintf(['\n > USERPROFILE: ', strrep(getenv('USERPROFILE'), '\', '\\'), '\n']);
+    fprintf(['\n > HOME: ', strrep(getenv('HOME'), '\', '\\') , '\n']);
     fprintf(['\n > COVERAGE: ', COVERAGE, '\n']);
 
     % run the tests in the subfolder verifiedTests/ recursively
