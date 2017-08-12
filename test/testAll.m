@@ -159,6 +159,11 @@ try
     % retrieve the models first
     retrieveModels;
 
+    % print the environment variables
+    fprintf(['\n > USERPROFILE: ', getenv('USERPROFILE'), '\n']);
+    fprintf(['\n > HOME: ', getenv('HOME'), '\n']);
+    fprintf(['\n > COVERAGE: ', COVERAGE, '\n']);
+
     % run the tests in the subfolder verifiedTests/ recursively
     result = runtests('./test/', 'Recursively', true, 'BaseFolder', '*verified*');
 
@@ -169,6 +174,8 @@ try
         sumFailed = sumFailed + result(i).Failed;
         sumIncomplete = sumIncomplete + result(i).Incomplete;
     end
+    
+    fprintf(['\n > ', sumFailed, ' tests failed. ', sumIncomplete , ' tests are incomplete.\n\n']);
         
     if COVERAGE
         % write coverage based on profile('info')
@@ -208,8 +215,10 @@ try
     addpath(originalUserPath);
 
     if sumFailed > 0 || sumIncomplete > 0
-        exit_code = 1;
+        exit_code = 1;  
     end
+
+    fprintf(['\n > The exit code is ', exit_code, '.']);
 
     % ensure that we ALWAYS call exit
     if ~isempty(strfind(getenv('HOME'), 'jenkins')) || ~isempty(strfind(getenv('USERPROFILE'), 'jenkins'))
@@ -225,5 +234,6 @@ catch ME
         rethrow(ME);
     end
 end
+
 % Switch back to the folder we were in.
 cd(origDir)
