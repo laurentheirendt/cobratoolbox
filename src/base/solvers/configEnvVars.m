@@ -233,8 +233,6 @@ function [] = configEnvVars(printLevel)
                         subDir = filesep;
                         if k == 1 || k == 2
                             subDir = generateSolverSubDirectory(solverPaths{k, 3});
-                        %elseif k == 2
-                        %    subDir = generateSolverSubDirectory(solverPaths{k, 3}, false);
                         end
                         eval([globEnvVar, ' = [', globEnvVar, ', ''', subDir, '''];']);
                     end
@@ -265,7 +263,7 @@ function [] = configEnvVars(printLevel)
     end
 end
 
-function subDir = generateSolverSubDirectory(solverName, extraFlagOSpath)
+function subDir = generateSolverSubDirectory(solverName)
 % Define the subdirectory path of the solver to be included
 %
 % USAGE:
@@ -281,10 +279,6 @@ function subDir = generateSolverSubDirectory(solverName, extraFlagOSpath)
 
     subDir = '';
 
-    if nargin < 2
-        extraFlagOSpath = true;
-    end
-
     % GUROBI path
     if ~isempty(strfind(solverName, 'gurobi'))
         if ispc
@@ -297,11 +291,7 @@ function subDir = generateSolverSubDirectory(solverName, extraFlagOSpath)
 
         % check for 64-bit
         if ~isempty(strfind(computer('arch'), '64'))
-            if extraFlagOSpath
-                subDir = [filesep, osPath, filesep, 'matlab'];
-            else
-                subDir = [filesep, 'matlab'];
-            end
+            subDir = [filesep, osPath, filesep, 'matlab'];
         end
     end
 
