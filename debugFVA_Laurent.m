@@ -1,13 +1,13 @@
 % Diana El Assal 27/10/2017
 % Laurent Heirendt to debug FVA please, so that the coupling constraints
-% (C*v>=d). Thank you! :) 
+% (C*v>=d). Thank you! :)
 %% *Setting the *optimization* solver*
 
-changeCobraSolver('gurobi','LP');
-%% 
-% Unless the model is already loaded into the workspace, ReconX needs to 
-% be loaded. Here, we use Recon2.0 model for illustration, although any model 
-% can be used. 
+changeCobraSolver('gurobi');
+%%
+% Unless the model is already loaded into the workspace, ReconX needs to
+% be loaded. Here, we use Recon2.0 model for illustration, although any model
+% can be used.
 
 clear model
 if ~exist('modelOrig','var')
@@ -26,7 +26,7 @@ multipleRxnList={'PCHOLP_hs', 'PLA2_2', 'SMS'};
 modelConstrained.lb(findRxnIDs(modelConstrained, multipleRxnList));
 modelConstrained.ub(findRxnIDs(modelConstrained, multipleRxnList));
 c=[1,1,1];
-d=2.674; 
+d=2.674;
 ineqSense='G';
 modelConstrainedAb=constrainRxnListAboveBound(modelConstrained,multipleRxnList,c,d,ineqSense);
 rxnInd = findRxnIDs(modelConstrainedAb, multipleRxnList);
@@ -49,10 +49,12 @@ sum(c*FBAsolution.x(rxnInd))
 modelConstrainedAb.c = zeros(size(modelConstrainedAb.rxns));
 find(modelConstrainedAb.c)
 % *************FVA fails **************
-[minFlux, maxFlux, Vmin, Vmax] = fluxVariability(modelConstrainedAb);
-assert(sum(c*minFlux(rxnInd)) == zeros(3,1))
-%return; % should be zero 
+% Performs flux variablity analysis
+[minFlux, maxFlux, Vmin, Vmax] = fluxVariability(modelConstrainedAb, [], [], model.rxns(rxnInd));
+assert(sum(c*minFlux) == 0)
+%return; % should be zero
 
+changeCobraSolver('ibm_cplex');
 % fastFVA
 [minFlux, maxFlux, optsol, ret, fbasol, fvamin, fvamax, statussolmin, statussolmax] = fastFVA(modelConstrainedAb);
 assert(sum(c*minFlux(rxnInd)) == zeros(3,1))
