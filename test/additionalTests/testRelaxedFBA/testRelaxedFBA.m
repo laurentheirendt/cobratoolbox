@@ -1,8 +1,19 @@
-% The COBRAToolbox: testRelaxedFBA.m
-%
-% Purpose:
-%     - testRelaxedFBA tests the relaxedFBA functionality
-%
+if 0
+    rxnForms = {' -> A','A -> B','B -> C', 'B -> D','D -> C','C ->'};
+    rxnNames = {'Ain','AB','BC','BD','DC', 'Cout'};
+    model = createModel(rxnNames, rxnNames,rxnForms);
+    model.lb(3) = 2; %BD
+    model.lb(4) = 2; 
+    model.ub(6) = 2;
+else
+    rxnForms = {' -> A','A -> B','A -> D','B -> C', 'B -> D','D -> C','C ->'};
+    rxnNames = {'Ain','AB','AD','BC','BD','DC', 'Cout'};
+    model = createModel(rxnNames, rxnNames,rxnForms);
+    model.lb(1) = 5;
+    %model.ub(6) = 2;
+    model.ub(6) = 2.1;
+    model.ub(4) = 1;
+end
 
 
 solverPkgs = prepareTest('needsLP',true);
@@ -61,81 +72,13 @@ for k = 1:numel(solverPkgs.LP)
     %This will indicate, that the problem is still infeasible.
     assert(verifyCobraFunctionError('relaxedFBA', 'inputs', {model, param}, 'testMessage', 'Problem infeasible !'));
 
-    %Now, allow only relaxations on the Exchange reactions
-    param.exchangeRelax = 2;
-    [relaxation,relaxmodel] = relaxedFBA(model,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(relaxation.q(6) >= 1)
-    assert(nnz(relaxation.p) == 0 && nnz(relaxation.r) == 0);
+%stopping criterion
+param.epsilon = 1e-6;
+%capped l0 parameter
+param.theta0   = 0.5;
 
     %Test that the model with blocked exchangers cannot be relaxed.
     param.exchangeRelax = 1;
     assert(verifyCobraFunctionError('relaxedFBA', 'inputs', {modelWithBlockedExport, param}, 'testMessage', 'Problem infeasible !'));
 
-    %This should work with only one blocked exchanger and an alternative route!
-    [relaxation,relaxmodel] = relaxedFBA(modelWithPartiallyClosedExchangers,param);
-	sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(relaxation.q(7) >= 1)
-    assert(nnz(relaxation.p) == 0 && nnz(relaxation.r) == 0);
-
-    %Test internalRelax
-    param.exchangeRelax = 0;
-    param.internalRelax = 2;
-    [relaxation,relaxmodel] = relaxedFBA(model,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(nnz(relaxation.r) == 0)
-    assert(nnz(relaxation.p(3:4)) == 1 || nnz(relaxation.q(3:4)) == 1);
-
-    % Test that it does not work with reactions on finite bounds.
-    param.internalRelax = 1;
-    param.minLB = -1000;    %Otherwise minLB would be 0 on the model, and the bounded reactions would not be considered as finite bounded.
-    assert(verifyCobraFunctionError('relaxedFBA', 'inputs', {modelWithFiniteBounds, param}, 'testMessage', 'Problem infeasible !'));
-
-    %But this works, if we allow relaxation on finite bound internals.
-    param.internalRelax = 2;
-    [relaxation,relaxmodel] = relaxedFBA(modelWithFiniteBounds,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(nnz(relaxation.r) == 0)
-    assert(nnz(relaxation.p(3:4)) == 1 || nnz(relaxation.q(3:4)) == 1);
-
-    %And test steady state relaxation
-    param.internalRelax = 0;
-    param.steadyStateRelax = 1;
-    [relaxation,relaxmodel] = relaxedFBA(model,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(relaxation.r(4) == -1); %This is the smallest relaxation.
-    assert(nnz(relaxation.p) == 0 && nnz(relaxation.q) == 0);
-
-    %Now lets also test exclude metabolites
-    param.excludedMetabolites = false(size(model.mets));
-    param.excludedMetabolites(4) = true; %exclude the previous solution.
-    [relaxation,relaxmodel] = relaxedFBA(model,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(nnz(relaxation.r) == 1); %Some other minimal solution should be found.
-    assert(relaxation.r(4) == 0); %This is the smallest relaxation.
-    assert(nnz(relaxation.p) == 0 && nnz(relaxation.q) == 0);
-
-    %Lets test excludeReactions
-    param = struct();
-    param.internalRelax = 1; %Only reaction infinite bounds i.e. R4
-    param.steadyStateRelax = 0; %No steady sttestate relaxation
-    param.excludedReactions = false(size(model.rxns));
-    param.excludedReactions(6) = true; %Exclude Cout.
-    [relaxation,relaxmodel] = relaxedFBA(modelWithOneFiniteBound,param);
-    sol = optimizeCbModel(relaxmodel);
-    assert(sol.stat == 1);
-    assert(nnz(relaxation.r) == 0); %Some other minimal solution should be found.
-    assert(relaxation.p(4) == 1); %This is the only possible relaxation.
-    assert(nnz(relaxation.p) == 1); %And nothing else.
-    assert(nnz(relaxation.q) == 0);
-
-end
-%restore warnings settings.
-warning(warn)
-
+plotRelaxedFBA(sol, model)
