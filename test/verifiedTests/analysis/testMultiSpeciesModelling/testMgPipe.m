@@ -29,7 +29,7 @@ resPath= [CBTDIR filesep '.tmp'] ;
 
 % path to and name of the file with dietary information.
 dietFilePath=[CBTDIR filesep 'papers' filesep '2018_microbiomeModelingToolbox' filesep 'resources' filesep 'AverageEuropeanDiet'];
-    
+
 % path to and name of the file with abundance information.
 abunFilePath=[CBTDIR filesep 'papers' filesep '2018_microbiomeModelingToolbox' filesep 'examples' filesep 'normCoverage.csv'];
 
@@ -137,65 +137,60 @@ warning('off', 'all');
     assert(length(lastwarn()) > 0)
 warning('on', 'all');
 
-% change the directory
-cd(currentDir)
-
 % test getMappingInfo
 [reac,micRea,binOrg,patOrg,reacPat,reacNumb,reacSet,reacTab,reacAbun,reacNumber]=getMappingInfo(models,abunFilePath,indNumb);
-
-assert(exist('reac', 'var') == 1)
-assert(exist('micRea', 'var') == 1)
-assert(exist('binOrg', 'var') == 1)
-assert(exist('patOrg', 'var') == 1)
-assert(exist('reacPat', 'var') == 1)
-assert(exist('reacNumb', 'var') == 1)
-assert(exist('reacSet', 'var') == 1)
-assert(exist('reacTab', 'var') == 1)
-assert(exist('reacAbun', 'var') == 1)
-assert(exist('reacNumber', 'var') == 1)
+keyboard
+assert(exist('reac', 'var'))
+assert(exist('micRea', 'var'))
+assert(exist('binOrg', 'var'))
+assert(exist('patOrg', 'var'))
+assert(exist('reacPat', 'var'))
+assert(exist('reacNumb', 'var'))
+assert(exist('reacSet', 'var'))
+assert(exist('reacTab', 'var'))
+assert(exist('reacAbun', 'var'))
+assert(exist('reacNumber', 'var'))
 
 % test checkNomenConsist
 [autoStat,fixVec,organisms]=checkNomenConsist(organisms,autoFix);
 
-assert(exist('autoStat', 'var') == 1)
-assert(exist('fixVec', 'var') == 1)
+assert(exist('autoStat', 'var'))
+assert(exist('fixVec', 'var'))
 assert(length(organisms) == 5)
 
 % test fastSetupCreator
 
 setup=fastSetupCreator(models, organisms, {},objre);
- 
-assert(exist('setup', 'var') == 1)
-assert(strcmp(class(setup),'struct') == 1)
-assert((length(setup.S) == length(setup.rxns)) == 1)
-assert((length(setup.lb) == length(setup.rxns)) == 1)  
-assert((length(setup.c) == length(setup.rxns)) == 1) 
-assert((length(setup.mets) == length(setup.metNames)) == 1)  
- 
-assert(length(setup.rxns(strmatch('EX',setup.rxns))) /2 == length(setup.rxns(strmatch('DUt',setup.rxns))) == 1) 
-assert(length(setup.rxns(strmatch('EX',setup.rxns))) /2 == length(setup.rxns(strmatch('UFEt',setup.rxns))) == 1) 
+
+assert(exist('setup', 'var'))
+assert(strcmp(class(setup),'struct'))
+assert(length(setup.S) == length(setup.rxns))
+assert(length(setup.lb) == length(setup.rxns))
+assert(length(setup.c) == length(setup.rxns))
+assert(length(setup.mets) == length(setup.metNames))
+
+assert(length(setup.rxns(strmatch('EX',setup.rxns))) / 2 == length(setup.rxns(strmatch('DUt',setup.rxns))) == 1)
+assert(length(setup.rxns(strmatch('EX',setup.rxns))) / 2 == length(setup.rxns(strmatch('UFEt',setup.rxns))) == 1)
 assert(length(setup.rxns(strmatch('DUt',setup.rxns)))== length(setup.rxns(strmatch('UFEt',setup.rxns))) == 1)
 
-assert((length(strmatch(organisms(1),setup.rxns)) > 0) == 1)
-assert((length(strmatch(organisms(2),setup.rxns)) > 0) == 1)
-assert((length(strmatch(organisms(3),setup.rxns)) > 0) == 1)
-assert((length(strmatch(organisms(4),setup.rxns)) > 0) == 1)
-assert((length(strmatch(organisms(5),setup.rxns)) > 0) == 1)
+for k = 1:5
+    assert(length(strmatch(organisms(1),setup.rxns)) > 0)
+end
 
 % test createdModels
 [createdModels]=createPersonalizedModel(abunFilePath,resPath,setup,sampName,organisms,indNumb);
 assert(length(createdModels)== 5)
-assert(strcmp(createdModels(2,1),'Test1') == 1)
-assert(strcmp(createdModels(5,1),'Test4') == 1)
+assert(strcmp(createdModels(2,1),'Test1'))
+assert(strcmp(createdModels(5,1),'Test4'))
 
-microbiota_model=load(strcat(resPath,'microbiota_model_samp_Test1')); 
+microbiota_model=load(strcat(resPath,'microbiota_model_samp_Test1'));
 microbiota_model=microbiota_model.microbiota_model;
-assert(length(microbiota_model.A)> length(microbiota_model.S))
+assert(length(microbiota_model.A) > length(microbiota_model.S))
 assert(length(microbiota_model.csense) == length(microbiota_model.A))
-assert((length(strmatch('communityBiomass',microbiota_model.rxns)) > 0) == 1)
-assert((length(strmatch('UFEt_microbeBiomass',microbiota_model.rxns)) > 0) == 1)
-assert((length(strmatch('EX_microbeBiomass[fe]',microbiota_model.rxns)) > 0) == 1)
-assert(length(microbiota_model.rxns(strmatch('DUt',microbiota_model.rxns)))== length(microbiota_model.rxns(strmatch('UFEt',microbiota_model.rxns)))-1 == 1)
+assert(length(strmatch('communityBiomass',microbiota_model.rxns)) > 0)
+assert(length(strmatch('UFEt_microbeBiomass',microbiota_model.rxns)) > 0)
+assert(length(strmatch('EX_microbeBiomass[fe]',microbiota_model.rxns)) > 0)
+assert(length(microbiota_model.rxns(strmatch('DUt',microbiota_model.rxns))) == length(microbiota_model.rxns(strmatch('UFEt',microbiota_model.rxns)))-1 == 1)
 assert(microbiota_model.A(1,1) == -0.3000)
 assert(microbiota_model.A(2,1) == -0.2000)
 assert(microbiota_model.A(3,1) == -0.1000)
@@ -206,11 +201,12 @@ assert(microbiota_model.A(6,1) == 1)
 % test createdModels
 [ID,fvaCt,nsCt,presol,inFesMat]=microbiotaModelSimulator(resPath,setup,sampName,dietFilePath,rDiet,0,extSolve,indNumb,fvaType);
 
-assert(exist('ID', 'var') == 1)
-assert(exist('fvaCt', 'var') == 1)
-assert(exist('nsCt', 'var') == 1)
-assert(exist('inFesMat', 'var') == 1)
-assert((length(presol)==5) == 1)
-assert(sum(cell2mat(presol(:,1)))==4)
-% cd resPath
-% delete [resPath 'simRes.mat'] 
+assert(exist('ID', 'var'))
+assert(exist('fvaCt', 'var'))
+assert(exist('nsCt', 'var'))
+assert(exist('inFesMat', 'var'))
+assert((length(presol)==5))
+assert(sum(cell2mat(presol(:,1))) == 4)
+
+% change the directory
+cd(currentDir)
