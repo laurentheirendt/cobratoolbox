@@ -319,10 +319,15 @@ if isempty(heuristics)
     end
 end
 
-% turn heuristics off for Mosek (don't solve the heuristic problem)
-if strcmp(cobraParams.LP.solver, 'mosek')
+% only allow heuristics for the following solvers:
+%  - tomlab_cplex
+%  - gurobi
+%  - ibm_cplex
+%
+% all others: don't solve the heuristic problem
+if ~strcmp(cobraParams.LP.solver, 'tomlab_cplex') && ~strcmp(cobraParams.LP.solver, 'gurobi') && ~strcmp(cobraParams.LP.solver, 'ibm_cplex')
     heuristics = 0;
-    warning([' > The level of heuristics has been set to 0 for the Mosek solver']);
+    warning([' > The level of heuristics has been set to 0 for the ' cobraParams.LP.solver ' solver']);
 end
 
 % each cell in rxnNameList must be a reaction at this point, otherwise there would be error earlier
